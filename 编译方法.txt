@@ -1,0 +1,4 @@
+1¡¢makefile.misc¿½±´µ½bluez-5.37/
+2¡¢networkcfg.c, wpa_ipc.c, wpa_ipc.h¿½±´µ½bluez-5.37/tools/
+3¡¢export CROSS_COMPILE=/home/liuxing/bluez-5.23/arm-histbv320-linux/bin/arm-histbv320-linux-
+4¡¢make -f makefile.misc all

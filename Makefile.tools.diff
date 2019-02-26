@@ -1,0 +1,24 @@
+diff --git a/Makefile.tools b/Makefile.tools
+index 6cb4d87..e14ea19 100644
+--- a/Makefile.tools
++++ b/Makefile.tools
+@@ -185,7 +185,7 @@ bin_PROGRAMS += tools/rctest tools/l2test tools/l2ping tools/bccmd \
+ noinst_PROGRAMS += tools/bdaddr tools/avinfo tools/avtest \
+ 			tools/scotest tools/amptest tools/hwdb \
+ 			tools/hcieventmask tools/hcisecfilter \
+-			tools/btinfo tools/btconfig \
++			tools/btinfo tools/btconfig tools/networkcfg \
+ 			tools/btsnoop tools/btproxy \
+ 			tools/btiotest tools/bneptest tools/mcaptest \
+ 			tools/cltest tools/oobtest tools/advtest \
+@@ -200,6 +200,10 @@ tools_reconnect = tools/reconnect.c
+ tools_reconnect_LDADD = gdbus/libgdbus-internal.la src/libshared-glib.la \
+ 				@GLIB_LIBS@ @DBUS_LIBS@
+ 
++tools_networkcfg_SOURCES = tools/networkcfg.c src/uuid-helper.c
++tools_networkcfg_LDADD = src/libshared-mainloop.la \
++			 lib/libbluetooth-internal.la
++
+ tools_bdaddr_SOURCES = tools/bdaddr.c src/oui.h src/oui.c
+ tools_bdaddr_LDADD = lib/libbluetooth-internal.la @UDEV_LIBS@
+ 

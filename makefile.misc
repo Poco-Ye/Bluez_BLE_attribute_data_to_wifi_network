@@ -1,0 +1,77 @@
+CC = $(CROSS_COMPILE)gcc
+LD = $(CROSS_COMPILE)ld
+AR = $(CROSS_COMPILE)ar
+
+CFLAGS += -I$(PWD) -I$(PWD)/lib
+
+networkcfg_LDFLAGS += -L$(PWD) -lshared-mainloop
+networkcfg_LDFLAGS += -L$(PWD) -lbluetooth-internal
+networkcfg_LDFLAGS += -lpthread
+
+shared_sources = src/shared/io.h src/shared/timeout.h \
+			src/shared/queue.h src/shared/queue.c \
+			src/shared/util.h src/shared/util.c \
+			src/shared/mgmt.h src/shared/mgmt.c \
+			src/shared/crypto.h src/shared/crypto.c \
+			src/shared/ecc.h src/shared/ecc.c \
+			src/shared/ringbuf.h src/shared/ringbuf.c \
+			src/shared/hci.h src/shared/hci.c \
+			src/shared/hci-crypto.h src/shared/hci-crypto.c \
+			src/shared/hfp.h src/shared/hfp.c \
+			src/shared/uhid.h src/shared/uhid.c \
+			src/shared/pcap.h src/shared/pcap.c \
+			src/shared/btsnoop.h src/shared/btsnoop.c \
+			src/shared/att-types.h \
+			src/shared/att.h src/shared/att.c \
+			src/shared/gatt-helpers.h src/shared/gatt-helpers.c \
+			src/shared/gatt-client.h src/shared/gatt-client.c \
+			src/shared/gatt-server.h src/shared/gatt-server.c \
+			src/shared/gatt-db.h src/shared/gatt-db.c \
+			src/shared/gap.h src/shared/gap.c
+
+LIBSHARED_MAINLOOP_SOURCES = $(shared_sources) \
+				src/shared/io-mainloop.c \
+				src/shared/timeout-mainloop.c \
+				src/shared/mainloop.h src/shared/mainloop.c
+
+libshared-mainloop_OBJECTS = $(filter-out %.h, $(patsubst %.c, %.o, $(LIBSHARED_MAINLOOP_SOURCES)))
+libshared-mainloop_LIB = libshared-mainloop.a
+
+# libbluetooth-internal.a
+lib_sources = lib/bluetooth.c lib/hci.c lib/sdp.c
+lib_headers = lib/bluetooth.h lib/hci.h lib/hci_lib.h \
+		lib/sco.h lib/l2cap.h lib/sdp.h lib/sdp_lib.h \
+		lib/rfcomm.h lib/bnep.h lib/cmtp.h lib/hidp.h
+
+extra_headers = lib/mgmt.h lib/uuid.h lib/a2mp.h lib/amp.h
+extra_sources = lib/uuid.c
+local_headers = $(foreach file,$(lib_headers), lib/bluetooth/$(notdir $(file)))
+
+libbluetooth-internal_OBJECTS = $(filter-out %.h, $(patsubst %.c, %.o, $(lib_sources) $(extra_sources)))
+
+tools_hciconfig_SOURCES = tools/hciconfig.c tools/csr.h tools/csr.c
+libbluetooth-internal_LIB = libbluetooth-internal.a
+
+# rules
+
+$(libbluetooth-internal_OBJECTS): $(local_headers)
+lib/bluetooth/%.h: lib/%.h
+	mkdir -p lib/bluetooth
+	ln -sf $(PWD)/$< $@
+
+libbluetooth-internal.a: $(libbluetooth-internal_OBJECTS)
+	$(AR) rcs $@ $^
+
+all: $(libshared-mainloop_LIB) $(libbluetooth-internal_LIB) tools/networkcfg
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(libshared-mainloop_LIB): $(libshared-mainloop_OBJECTS)
+	$(AR) rcs $@ $(libshared-mainloop_OBJECTS)
+
+tools/networkcfg: tools/networkcfg.o src/uuid-helper.o tools/wpa_ipc.o
+	$(CC) -o $@ $^ $(networkcfg_LDFLAGS)
+
+clean:
+	rm -f $(libshared-mainloop_OBJECTS) $(libshared-mainloop_LIB) tools/networkcfg.o src/uuid-helper.o \
+		$(libbluetooth-internal_OBJECTS) $(libbluetooth-internal_LIB) tools/wpa_ipc.o
